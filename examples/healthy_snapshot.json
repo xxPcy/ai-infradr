@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "system": {"os": "Linux", "release": "6.8"},
+  "python": {"version": "3.11.9"},
+  "gpu": {
+    "available": true,
+    "nvidia_smi": true,
+    "device_count": 2,
+    "driver_version": "570.86",
+    "driver_cuda_supported": "12.8"
+  },
+  "cuda": {"toolkit_version": "12.6", "visible_devices": null},
+  "torch": {
+    "installed": true,
+    "version": "2.7.1+cu126",
+    "cuda_runtime": "12.6",
+    "cuda_available": true,
+    "device_count": 2
+  },
+  "nccl": {"available": true, "version": "2.26.2"}
+}

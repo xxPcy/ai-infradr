@@ -1,0 +1,30 @@
+name: Compatibility case
+description: Submit a reproducible CUDA/PyTorch/NCCL compatibility issue for a new rule
+title: "[Compatibility]: "
+labels: ["compatibility"]
+body:
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: What fails and what is the exact error?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment evidence
+      description: Include driver, GPU, torch, CUDA runtime/toolkit, Python, and NCCL versions when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: Upstream reference
+      description: Link official documentation, release notes, or upstream issue confirming the constraint when possible.

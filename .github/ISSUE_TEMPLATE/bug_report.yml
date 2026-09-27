@@ -1,0 +1,25 @@
+name: Bug report
+description: Report an incorrect diagnosis, crash, or probe failure
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the diagnostic code if one was shown.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: AI InfraDr output
+      description: Paste `ai-infradr --json` output after removing hostnames/paths you do not want to share.
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: ai-infradr 0.1.0
+    validations:
+      required: true

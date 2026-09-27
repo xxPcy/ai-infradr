@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "rules": [
+    {
+      "id": "NVIDIA_DRIVER_NOT_VISIBLE",
+      "severity": "high",
+      "title": "NVIDIA driver is not visible to the current environment",
+      "summary": "PyTorch was built with CUDA support, but nvidia-smi is unavailable.",
+      "when": {
+        "all": [
+          {"path": "gpu.nvidia_smi", "op": "falsy"},
+          {"path": "torch.cuda_runtime", "op": "not_empty"}
+        ]
+      },
+      "evidence": [
+        {"label": "torch CUDA runtime", "path": "torch.cuda_runtime"},
+        {"label": "nvidia-smi", "literal": "not found"}
+      ],
+      "suggestions": [
+        "Confirm the NVIDIA driver is installed on the host.",
+        "If running in Docker, start the container with NVIDIA Container Toolkit GPU access."
+      ]
+    },
+    {
+      "id": "PYTORCH_NOT_INSTALLED",
+      "severity": "info",
+      "title": "PyTorch is not installed",
+      "summary": "PyTorch-specific CUDA and NCCL checks were skipped.",
+      "when": {"all": [{"path": "torch.installed", "op": "falsy"}]},
+      "evidence": [{"label": "torch", "literal": "not found in the current Python environment"}],
+      "suggestions": [
+        "Install the PyTorch build appropriate for your platform if this environment needs PyTorch."
+      ]
+    },
+    {
+      "id": "PYTORCH_CPU_ONLY_WITH_NVIDIA_GPU",
+      "severity": "medium",
+      "title": "CPU-only PyTorch build detected on an NVIDIA GPU machine",
+      "summary": "The host has an NVIDIA GPU, but this PyTorch build has no CUDA runtime.",
+      "when": {
+        "all": [
+          {"path": "gpu.available", "op": "truthy"},
+          {"path": "torch.installed", "op": "truthy"},
+          {"path": "torch.cuda_runtime", "op": "empty"}
+        ]
+      },
+      "evidence": [
+        {"label": "NVIDIA GPU count", "path": "gpu.device_count"},
+        {"label": "torch version", "path": "torch.version"},
+        {"label": "torch.version.cuda", "literal": "None"}
+      ],
+      "suggestions": [
+        "Install a CUDA-enabled PyTorch wheel matching your deployment requirements."
+      ]
+    },
+    {
+      "id": "TORCH_CUDA_UNAVAILABLE",
+      "severity": "high",
+      "title": "PyTorch has CUDA support but cannot use CUDA",
+      "summary": "The installed PyTorch build includes a CUDA runtime, but CUDA initialization is unavailable.",
+      "when": {
+        "all": [
+          {"path": "torch.installed", "op": "truthy"},
+          {"path": "torch.cuda_runtime", "op": "not_empty"},
+          {"path": "torch.cuda_available", "op": "falsy"}
+        ]
+      },
+      "evidence": [
+        {"label": "torch version", "path": "torch.version"},
+        {"label": "torch CUDA runtime", "path": "torch.cuda_runtime"},
+        {"label": "torch.cuda.is_available()", "literal": "False"},
+        {"label": "NVIDIA driver", "path": "gpu.driver_version", "optional": true}
+      ],
+      "suggestions": [
+        "Check GPU visibility and CUDA_VISIBLE_DEVICES.",
+        "Check whether the host driver supports the CUDA runtime used by PyTorch.",
+        "In containers, verify GPU devices and driver libraries are mounted into the container."
+      ]
+    },
+    {
+      "id": "NVIDIA_DRIVER_TOO_OLD_FOR_TORCH_CUDA",
+      "severity": "high",
+      "title": "NVIDIA driver does not support the CUDA runtime used by PyTorch",
+      "summary": "The maximum CUDA version reported by nvidia-smi is older than torch.version.cuda.",
+      "when": {
+        "all": [
+          {"path": "gpu.driver_cuda_supported", "op": "not_empty"},
+          {"path": "torch.cuda_runtime", "op": "not_empty"},
+          {"left": "gpu.driver_cuda_supported", "op": "version_lt", "right": "torch.cuda_runtime"}
+        ]
+      },
+      "evidence": [
+        {"label": "Driver-reported CUDA support", "path": "gpu.driver_cuda_supported"},
+        {"label": "PyTorch CUDA runtime", "path": "torch.cuda_runtime"},
+        {"label": "NVIDIA driver", "path": "gpu.driver_version", "optional": true}
+      ],
+      "suggestions": [
+        "Upgrade the NVIDIA driver, or install a PyTorch build using an older supported CUDA runtime."
+      ]
+    },
+    {
+      "id": "CUDA_TOOLKIT_DIFFERS_FROM_TORCH_RUNTIME",
+      "severity": "low",
+      "title": "System CUDA toolkit differs from PyTorch CUDA runtime",
+      "summary": "This is often valid because PyTorch wheels can ship their own CUDA runtime, but source builds and CUDA extensions may use the system toolkit.",
+      "when": {
+        "all": [
+          {"path": "cuda.toolkit_version", "op": "not_empty"},
+          {"path": "torch.cuda_runtime", "op": "not_empty"},
+          {"left": "cuda.toolkit_version", "op": "neq_path", "right": "torch.cuda_runtime"}
+        ]
+      },
+      "evidence": [
+        {"label": "nvcc toolkit", "path": "cuda.toolkit_version"},
+        {"label": "torch CUDA runtime", "path": "torch.cuda_runtime"}
+      ],
+      "suggestions": [
+        "Do not change versions solely because of this warning.",
+        "If a CUDA extension fails to build/load, verify which toolkit and ABI it was compiled against."
+      ]
+    },
+    {
+      "id": "NCCL_UNAVAILABLE_FOR_MULTI_GPU",
+      "severity": "medium",
+      "title": "NCCL is unavailable in a multi-GPU PyTorch environment",
+      "summary": "Distributed GPU workloads usually require a working NCCL backend.",
+      "when": {
+        "all": [
+          {"path": "torch.device_count", "op": "gt", "value": 1},
+          {"path": "nccl.available", "op": "falsy"}
+        ]
+      },
+      "evidence": [
+        {"label": "PyTorch visible GPU count", "path": "torch.device_count"},
+        {"label": "NCCL version via torch", "literal": "unavailable"}
+      ],
+      "suggestions": [
+        "Verify that your PyTorch build includes NCCL support.",
+        "Run a small torch.distributed NCCL smoke test before launching a large job."
+      ]
+    }
+  ]
+}
